@@ -1,0 +1,97 @@
+{% extends "juice/templates/index.html" %}
+
+{% block hero %}
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <section class="text-center">
+      <img class="hero-image" style="width: 100%" src="{{ get_url(path="logo.png") }}">
+      <h2 class="title-text">
+          A programming language for data stream processing.
+      </h2>
+  </section>
+
+<div class="rounded-rectangle">
+<pre><code style="font-size:18px;"><span class="lineno"> 1 </span><span class="comment"># Calculate the total quantity and average EUR price of items every</span>
+<span class="lineno"> 2  </span><span class="comment"># six hours for orders that have been shipped in the last day.</span>
+<span class="lineno"> 3  </span>
+<span class="lineno"> 4  </span><span class="keyword">struct</span> <span class="type">Item</span>(id:<span class="type">u64</span>, usd:<span class="type">f64</span>, quantity:<span class="type">u64</span>);
+<span class="lineno"> 5  </span><span class="keyword">struct</span> <span class="type">Order</span>(id:<span class="type">u64</span>, items:<span class="type">Vec</span>[<span class="type">Item</span>], status:<span class="type">String</span>, ts:<span class="type">Time</span>);
+<span class="lineno"> 6  </span>
+<span class="lineno"> 7  </span><span class="keyword">from</span> o:<span class="type">Order</span> <span class="keyword">in</span> source(kafka(<span class="string">"localhost:9092/orders"</span>), json(), _.ts))
+<span class="lineno"> 8  </span><span class="keyword">where</span> o.status == <span class="string">"shipped"</span>
+<span class="lineno"> 9  </span><span class="keyword">from</span> i:<span class="type">Item</span> <span class="keyword">in</span> o.items
+<span class="lineno">10  </span><span class="keyword">group</span> itemId = i.id
+<span class="lineno">11  </span>  <span class="keyword">over</span> sliding(size=<span class="numeric">1d</span>, slide=<span class="numeric">6h</span>)
+<span class="lineno">12  </span>  <span class="keyword">compute</span> avgPrice = avg <span class="keyword">of</span> i.usd
+<span class="lineno">13  </span>          totalQuantity = sum <span class="keyword">of</span> i.quantity
+<span class="lineno">14  </span><span class="keyword">select</span> itemId, avgPriceEur=maxPrice*<span class="numeric">0.85</span>, totalQuantity
+<span class="lineno">15  </span><span class="keyword">into</span> sink(kafka(<span class="string">"localhost:9092/items"</span>), csv()).run(flink());
+</code></pre>
+</div>
+<style>
+  .keyword {
+    color:rgb(28,28,255);
+    font-weight:bold;
+  }
+  .numeric {
+    color:rgb(215,95,0);
+  }
+  .string {
+    color:rgb(0,135,0);
+  }
+  .builtin {
+    color:rgb(0,135,0);
+  }
+  .command {
+    color:rgb(135,0,175);
+  }
+  .comment {
+    color:rgb(135,135,135);
+    font-style=italic;
+  }
+  .lineno {
+    color:rgb(135,135,135);
+  }
+  .type {
+    color:rgb(135,0,175);
+    font-weight:bold;
+  }
+  .rounded-rectangle {
+    background-color:rgb(240,240,240);
+    border-radius:30px;
+    padding:30px;
+    margin:20px;
+    display:inline-block;
+    line-height:1.6;
+  }
+  .hero section {
+    padding: 0 5rem;
+  }
+  .mySlides {
+    display: none;
+  }
+  @media screen and (max-width: 768px) {
+    .hero section {
+      padding: 0 2rem;
+    }
+    .hero-image {
+      display: none
+    }
+  }
+  pre {
+    margin:0;
+    padding:0;
+  }
+</style>
+
+<div class="explore-more text"
+    onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">
+    <p style="font-size: 30px">
+    Get Started ⇩
+    </p>
+</div>
+
+{% endblock hero %}
+
+{% block favicon %}
+    <link rel="icon" type="image/png" href="/favicon_ico">
+{% endblock favicon %}
