@@ -1,0 +1,55 @@
+name: GitHub Pages
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+env:
+  ZOLA_REV: 77c87f5e2f20ee90cf73cc98fa5f3fb096bcfffd
+
+jobs:
+  gh-pages:
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Cargo
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Cache zola
+      id: cache-zola
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/bin/zola
+        key: ${{runner.os}}-${{env.ZOLA_REV}}
+
+    - name: Build zola
+      if: steps.cache-zola.outputs.cache-hit != 'true'
+      run: cargo install --git=https://github.com/getzola/zola.git --rev=${{env.ZOLA_REV}}
+
+    - name: Build website
+      run: zola build
+
+    - name: Deploy to gh-pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: |
+        success() &&
+        github.event_name == 'push' &&
+        github.ref == 'refs/heads/master'
+      with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        publish_dir: public
+        force_orphan: true
