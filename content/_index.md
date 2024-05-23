@@ -16,7 +16,7 @@ sort_by = "weight"
 
 ## Installation
 
-<pre><code><span class="unselectable">$ </span><span class="string">cargo</span> <span class="string">install</span> --git https://github.com/aqua-language/aqua
+<pre><code><span class="unselectable">$ </span><span class="string">cargo</span> <span class="string">install aqua</span> --git https://github.com/aqua-language/aqua
 </code></pre>
 
 ## Usage
