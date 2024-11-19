@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="icon" type="image/png" href="/favicon.ico">
+
+    <style>
+    :root {
+        /* Primary theme color */
+        --primary-color: white;
+        /* Primary theme text color */
+        --primary-text-color: #543631;
+        --primary-text-color-over: #000;
+        /* Primary theme link color */
+        --primary-link-color: #F9BB2D;
+        /* Secondary color: the background body color */
+        --secondary-color: white;
+        --secondary-text-color: #303030;
+        /* Highlight text color of table of content */
+        --toc-highlight-text-color: #d46e13;
+        --toc-background-color: white;
+        --code-color: #4a4a4a;
+        --code-background-color: white;
+        --shadow-color: #ddd;
+        /* Font used for headers (h1 & h2) */
+        --header-font-family: "Fira Sans", sans-serif;
+        /* Font used for text */
+        --text-font-family: "Fira Sans", sans-serif;
+    }
+</style>
+
+    
+    <link href="https://fonts.googleapis.com/css?family=Alfa+Slab+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/normalize.css">
+    <link rel="stylesheet" href="https://aqua-language.github.io/juice.css">
+    
+    
+</head>
+
+<body>
+    
+
+    <header class="pos-absolute" style="background-color: transparent">
+        
+
+<a href="https://aqua-language.github.io/">
+    <div class="logo">
+        <img src="https://aqua-language.github.io/logo.png" alt="logo">
+        Aqua
+    </div>
+</a>
+
+<nav>
+    
+    
+    
+    <a class="nav-item subtitle-text" href="https://aqua-language.github.io/about/">About</a>
+    
+    
+    
+    
+    <a class="nav-item subtitle-text" href="https://aqua-language.github.io/research/">Research</a>
+    
+    
+    
+        
+        <a class="nav-item subtitle-text" href="https://github.com/aqua-language/aqua">Github</a>
+        
+    
+</nav>
+
+    </header>
+
+    <div class="hero">
+        
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+<section class="text-center">
+    <img class="hero-image" src="https://aqua-language.github.io/logo.png">
+    <h1 class="title-text">A programming language for data stream processing.</h2>
+    <div class="rounded-rectangle">
+      <pre><code><span class='unselectable'>$ </span><span id="copyText"><span class="string">cargo</span> <span class="string">install</span> cli --git <a href="https://github.com/aqua-language/aqua" style="color:blue; text-decoration:underline">https://github.com/aqua-language/aqua</a></span><button class="copy-button" onclick="copyToClipboard()">COPY</button></code></pre>
+    </div>
+    <div id="message">Text copied to clipboard!</div>
+</section>
+
+<div class="rounded-rectangle">
+<pre><code><span class="lineno"> 1  </span><span class="comment"># Calculate the total quantity and average EUR price of items every</span>
+<span class="lineno"> 2  </span><span class="comment"># six hours for orders that have been shipped in the last day.</span>
+<span class="lineno"> 3  </span>
+<span class="lineno"> 4  </span><span class="keyword">struct</span> <span class="type">Item</span>(id:<span class="type">u64</span>, priceUsd:<span class="type">f64</span>, quantity:<span class="type">u64</span>);
+<span class="lineno"> 5  </span><span class="keyword">struct</span> <span class="type">Order</span>(id:<span class="type">u64</span>, items:<span class="type">Vec</span>[<span class="type">Item</span>], status:<span class="type">String</span>, timestamp:<span class="type">Time</span>);
+<span class="lineno"> 6  </span>
+<span class="lineno"> 7  </span><span class="keyword">var</span> reader = <span class="type">Reader</span>::<span class="function">kafka</span>(<span class="string">"localhost:9092/orders"</span>);
+<span class="lineno"> 8  </span><span class="keyword">var</span> writer = <span class="type">Writer</span>::<span class="function">kafka</span>(<span class="string">"localhost:9092/items"</span>);
+<span class="lineno"> 9  </span><span class="keyword">var</span> format = <span class="type">Format</span>::<span class="function">json</span>();
+<span class="lineno">10  </span>
+<span class="lineno">11  </span><span class="keyword">var</span> query =
+<span class="lineno">11  </span>  <span class="keyword">from</span> order:<span class="type">Order</span> <span class="keyword">in</span> <span class="type">Stream</span>::<span class="function">source</span>(reader, format, _.timestamp)
+<span class="lineno">12  </span>  <span class="keyword">where</span> order.status == <span class="string">"shipped"</span>
+<span class="lineno">13  </span>  <span class="keyword">from</span> item:<span class="type">Item</span> <span class="keyword">in</span> order.items
+<span class="lineno">14  </span>  <span class="keyword">group</span> itemId = item.id
+<span class="lineno">15  </span>    <span class="keyword">over</span> <span class="type">Window</span>::<span class="function">sliding</span>(size=<span class="numeric">1d</span>, slide=<span class="numeric">6h</span>)
+<span class="lineno">16  </span>    <span class="keyword">compute</span> avgPriceUsd = <span class="function">avg</span> <span class="keyword">of</span> item.priceUsd,
+<span class="lineno">17  </span>            totalQuantity = <span class="function">sum</span> <span class="keyword">of</span> item.quantity
+<span class="lineno">18  </span>  <span class="keyword">select</span> itemId, avgPriceEur = avgPriceUsd * <span class="numeric">0.85</span>, totalQuantity
+<span class="lineno">19  </span>  <span class="keyword">into</span> <span class="function">sink</span>(writer, format);
+<span class="lineno">20  </span>
+<span class="lineno">21  </span>query.<span class="function">run</span>(<span class="type">Backend</span>::<span class="function">flink</span>());
+</code></pre>
+</div>
+<style>
+  .keyword {
+    color: rgb(28,28,255);
+    font-weight: bold;
+  }
+  .numeric {
+    color: rgb(215,95,0);
+  }
+  .string {
+    color: rgb(0,135,0);
+  }
+  .builtin {
+    color: rgb(0,135,0);
+  }
+  .command {
+    color: rgb(135,0,175);
+  }
+  .function {
+    color: rgb(0,135,175);
+  }
+  .comment {
+    color: rgb(135,135,135);
+    font-style=italic;
+  }
+  .lineno {
+    color: rgb(135,135,135);
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera, and Firefox */
+  }
+  .type {
+    color: rgb(135,0,175);
+    font-weight: bold;
+  }
+  .rounded-rectangle {
+    background-color: rgb(240,240,240);
+    border-radius: 30px;
+    display: inline-block;
+    line-height: 1.6;
+    flex: 1 1 45%;
+    font-size: calc(1vw);
+    text-align: left;
+  }
+  .unselectable {
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera, and Firefox */
+  }
+  .hero {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+  }
+  .hero section, .hero .rounded-rectangle {
+    flex: 1 1 100%;
+    padding: 20px;
+  }
+  .hero-image {
+    width: 60%;
+  }
+  @media screen and (max-width: 1000px) {
+    .hero {
+      flex-wrap: wrap;
+      flex: 1 1 45%;
+    }
+    .rounded-rectangle {
+      flex: 1 1 45%;
+      font-size: calc(2vw);
+    }
+    .hero-image {
+      width: 50%;
+      padding: 50px;
+    }
+    .explore-more {
+      display: none;
+    }
+  }
+  pre {
+    margin: 0;
+    padding: 0;
+  }
+  .copy-button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-color: rgb(220,220,220);
+    border-radius: 10px;
+  }
+  #message {
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgb(110, 181, 255);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    visibility: hidden; /* Ensure it is hidden initially */
+  }
+  #message.show {
+      visibility: visible;
+      opacity: 1;
+  }
+</style>
+
+<div class="explore-more text"
+    onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">
+    <p style="font-size: 30px">
+    Get Started ⇩
+    </p>
+</div>
+
+<script>
+  function copyToClipboard() {
+    const text = document.getElementById('copyText').innerText;
+    const tempInput = document.createElement('input');
+    document.body.appendChild(tempInput);
+    tempInput.value = text;
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+
+    const message = document.getElementById('message');
+    message.classList.add('show');
+    message.style.visibility = 'visible'; // Ensure it's visible when shown
+
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            message.style.visibility = 'hidden';
+        }, 1000); // Wait for the opacity transition to complete
+    }, 2000); // Duration the message is visible
+  }
+</script>
+
+
+    </div>
+
+    
+
+    <main>
+        
+        
+        
+        
+        
+        <div class="toc">
+            <div class="toc-sticky">
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://aqua-language.github.io/#features-planned">Features (Planned)</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://aqua-language.github.io/#installation">Installation</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://aqua-language.github.io/#usage">Usage</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://aqua-language.github.io/#more">More</a>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+        
+
+        <div class="content text">
+            
+            <div id="features" class="heading-text">Overview</div>
+            <p><strong>Aqua</strong> is a high-level programming language for processing data streams. It is designed to be simple, expressive, efficient and safe. Aqua compiles to dataflow systems such as Apache Flink (Java), and a custom native runtime (Rust).</p>
+<h2 id="features-planned">Features (Planned)</h2>
+<ul>
+<li>Consume and produce streams using different connectors (e.g., Kafka, TCP, files).</li>
+<li>Decode and encode events using different data formats (e.g., CSV, JSON, Avro).</li>
+<li>Interactively create dataflows that transform, filter and aggregate data through concise query syntax.</li>
+<li>Transparently execute programs locally or distributed.</li>
+<li>Execute external Rust, Python and JavaScript code into programs with sandboxing through WebAssembly.</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre><code><span class="unselectable">$ </span><span class="string">cargo</span> <span class="string">install cli</span> --git https://github.com/aqua-language/aqua
+</code></pre>
+<h2 id="usage">Usage</h2>
+<pre><code>$ <span class="string">aqua</span>
+>> print(<span class="string">"Hello world!"</span>);
+Hello world!
+</code></pre>
+<h2 id="more">More</h2>
+<ul>
+<li>View the specification of Aqua in the <a href="/Manual.pdf">Manual</a>.</li>
+</ul>
+
+            
+        </div>
+
+        
+        
+    </main>
+
+    
+    <footer>
+        <small class="subtext">
+            <a href="https://huhu.io">Huhu.io</a> © 2021
+        </small>
+    </footer>
+    
+</body>
+<script>
+    const scrollHandler = entries => {
+        // Find the first entry which intersecting and ratio > 0.9 to highlight.
+        let entry = entries.find(entry => {
+            return entry.isIntersecting && entry.intersectionRatio > 0.9;
+        });
+        if (!entry) return;
+
+        document.querySelectorAll(".toc a").forEach((item) => {
+            item.classList.remove("active");
+        });
+
+        // let url = new URL(`#${entry.target.id}`);
+        let link = document.querySelector(`.toc a[href$="${decodeURIComponent(`#${entry.target.id}`)}"]`)
+        if (link) {
+            link.classList.add("active");
+            link.scrollIntoView({ behavior: "auto", block: "nearest" });
+        }
+    };
+    // Set -100px root margin to improve highlight experience.
+    const observer = new IntersectionObserver(scrollHandler, { threshold: 1 });
+    let items = document.querySelectorAll('h1,h2,h3,h4,h5,h6');
+    items.forEach(item => observer.observe(item));
+</script>
+
+</html>
