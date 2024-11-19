@@ -6,7 +6,7 @@
     <img class="hero-image" src="{{ get_url(path="logo.png") }}">
     <h1 class="title-text">A programming language for data stream processing.</h2>
     <div class="rounded-rectangle">
-      <pre><code><span class='unselectable'>$ </span><span id="copyText"><span class="string">cargo</span> <span class="string">install</span> aqua --git <a href="https://github.com/aqua-language/aqua" style="color:blue; text-decoration:underline">https://github.com/aqua-language/aqua</a></span><button class="copy-button" onclick="copyToClipboard()">COPY</button></code></pre>
+      <pre><code><span class='unselectable'>$ </span><span id="copyText"><span class="string">cargo</span> <span class="string">install</span> cli --git <a href="https://github.com/aqua-language/aqua" style="color:blue; text-decoration:underline">https://github.com/aqua-language/aqua</a></span><button class="copy-button" onclick="copyToClipboard()">COPY</button></code></pre>
     </div>
     <div id="message">Text copied to clipboard!</div>
 </section>
@@ -16,17 +16,24 @@
 <span class="lineno"> 2  </span><span class="comment"># six hours for orders that have been shipped in the last day.</span>
 <span class="lineno"> 3  </span>
 <span class="lineno"> 4  </span><span class="keyword">struct</span> <span class="type">Item</span>(id:<span class="type">u64</span>, priceUsd:<span class="type">f64</span>, quantity:<span class="type">u64</span>);
-<span class="lineno"> 5  </span><span class="keyword">struct</span> <span class="type">Order</span>(id:<span class="type">u64</span>, items:<span class="type">Vec</span>[<span class="type">Item</span>], status:<span class="type">String</span>, ts:<span class="type">Time</span>);
+<span class="lineno"> 5  </span><span class="keyword">struct</span> <span class="type">Order</span>(id:<span class="type">u64</span>, items:<span class="type">Vec</span>[<span class="type">Item</span>], status:<span class="type">String</span>, timestamp:<span class="type">Time</span>);
 <span class="lineno"> 6  </span>
-<span class="lineno"> 7  </span><span class="keyword">from</span> o:<span class="type">Order</span> <span class="keyword">in</span> source(kafka(<span class="string">"localhost:9092/orders"</span>), json(), _.ts)
-<span class="lineno"> 8  </span><span class="keyword">where</span> o.status == <span class="string">"shipped"</span>
-<span class="lineno"> 9  </span><span class="keyword">from</span> i:<span class="type">Item</span> <span class="keyword">in</span> o.items
-<span class="lineno">10  </span><span class="keyword">group</span> itemId = i.id
-<span class="lineno">11  </span>  <span class="keyword">over</span> sliding(size=<span class="numeric">1d</span>, slide=<span class="numeric">6h</span>)
-<span class="lineno">12  </span>  <span class="keyword">compute</span> avgPriceUsd = avg <span class="keyword">of</span> i.priceUsd,
-<span class="lineno">13  </span>          totalQuantity = sum <span class="keyword">of</span> i.quantity
-<span class="lineno">14  </span><span class="keyword">select</span> itemId, avgPriceEur = avgPriceUsd * <span class="numeric">0.85</span>, totalQuantity
-<span class="lineno">15  </span><span class="keyword">into</span> sink(kafka(<span class="string">"localhost:9092/items"</span>), csv()).run(flink());
+<span class="lineno"> 7  </span><span class="keyword">var</span> reader = <span class="type">Reader</span>::<span class="function">kafka</span>(<span class="string">"localhost:9092/orders"</span>);
+<span class="lineno"> 8  </span><span class="keyword">var</span> writer = <span class="type">Writer</span>::<span class="function">kafka</span>(<span class="string">"localhost:9092/items"</span>);
+<span class="lineno"> 9  </span><span class="keyword">var</span> format = <span class="type">Format</span>::<span class="function">json</span>();
+<span class="lineno">10  </span>
+<span class="lineno">11  </span><span class="keyword">var</span> query =
+<span class="lineno">11  </span>  <span class="keyword">from</span> order:<span class="type">Order</span> <span class="keyword">in</span> <span class="type">Stream</span>::<span class="function">source</span>(reader, format, _.timestamp)
+<span class="lineno">12  </span>  <span class="keyword">where</span> order.status == <span class="string">"shipped"</span>
+<span class="lineno">13  </span>  <span class="keyword">from</span> item:<span class="type">Item</span> <span class="keyword">in</span> order.items
+<span class="lineno">14  </span>  <span class="keyword">group</span> itemId = item.id
+<span class="lineno">15  </span>    <span class="keyword">over</span> <span class="type">Window</span>::<span class="function">sliding</span>(size=<span class="numeric">1d</span>, slide=<span class="numeric">6h</span>)
+<span class="lineno">16  </span>    <span class="keyword">compute</span> avgPriceUsd = <span class="function">avg</span> <span class="keyword">of</span> item.priceUsd,
+<span class="lineno">17  </span>            totalQuantity = <span class="function">sum</span> <span class="keyword">of</span> item.quantity
+<span class="lineno">18  </span>  <span class="keyword">select</span> itemId, avgPriceEur = avgPriceUsd * <span class="numeric">0.85</span>, totalQuantity
+<span class="lineno">19  </span>  <span class="keyword">into</span> <span class="function">sink</span>(writer, format);
+<span class="lineno">20  </span>
+<span class="lineno">21  </span>query.<span class="function">run</span>(<span class="type">Backend</span>::<span class="function">flink</span>());
 </code></pre>
 </div>
 <style>
@@ -45,6 +52,9 @@
   }
   .command {
     color: rgb(135,0,175);
+  }
+  .function {
+    color: rgb(0,135,175);
   }
   .comment {
     color: rgb(135,135,135);
@@ -168,5 +178,5 @@
 {% endblock hero %}
 
 {% block favicon %}
-    <link rel="icon" type="image/png" href="/favicon_ico">
+    <link rel="icon" type="image/png" href="/favicon.ico">
 {% endblock favicon %}
