@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://aqua-language.github.io/aqua/</loc>
+        <loc>https://aqua-language.github.io/</loc>
     </url>
     <url>
-        <loc>https://aqua-language.github.io/aqua/about/</loc>
+        <loc>https://aqua-language.github.io/about/</loc>
+    </url>
+    <url>
+        <loc>https://aqua-language.github.io/research/</loc>
     </url>
 </urlset>

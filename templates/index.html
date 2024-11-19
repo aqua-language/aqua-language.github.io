@@ -6,7 +6,7 @@
     <img class="hero-image" src="{{ get_url(path="logo.png") }}">
     <h1 class="title-text">A programming language for data stream processing.</h2>
     <div class="rounded-rectangle">
-      <pre><code><span class='unselectable'>$ </span><span id="copyText"><span class="string">cargo</span> <span class="string">install</span> cli --git <a href="https://github.com/aqua-language/aqua" style="color:blue; text-decoration:underline">https://github.com/aqua-language/aqua</a></span><button class="copy-button" onclick="copyToClipboard()">COPY</button></code></pre>
+      <pre><code><span class='unselectable'>$ </span><span id="copyText"><span class="string">cargo</span> <span class="string">install</span> aqua --git <a href="https://github.com/aqua-language/aqua" style="color:blue; text-decoration:underline">https://github.com/aqua-language/aqua</a></span><button class="copy-button" onclick="copyToClipboard()">COPY</button></code></pre>
     </div>
     <div id="message">Text copied to clipboard!</div>
 </section>
@@ -27,7 +27,7 @@
 <span class="lineno">12  </span>  <span class="keyword">where</span> order.status == <span class="string">"shipped"</span>
 <span class="lineno">13  </span>  <span class="keyword">from</span> item:<span class="type">Item</span> <span class="keyword">in</span> order.items
 <span class="lineno">14  </span>  <span class="keyword">group</span> itemId = item.id
-<span class="lineno">15  </span>    <span class="keyword">over</span> <span class="type">Window</span>::<span class="function">sliding</span>(size=<span class="numeric">1d</span>, slide=<span class="numeric">6h</span>)
+<span class="lineno">15  </span>    <span class="keyword">over</span> <span class="type">Window</span>::<span class="function">sliding</span>(<span class="numeric">1d</span>, <span class="numeric">6h</span>)
 <span class="lineno">16  </span>    <span class="keyword">compute</span> avgPriceUsd = <span class="function">avg</span> <span class="keyword">of</span> item.priceUsd,
 <span class="lineno">17  </span>            totalQuantity = <span class="function">sum</span> <span class="keyword">of</span> item.quantity
 <span class="lineno">18  </span>  <span class="keyword">select</span> itemId, avgPriceEur = avgPriceUsd * <span class="numeric">0.85</span>, totalQuantity
